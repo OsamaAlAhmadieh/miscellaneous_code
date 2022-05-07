@@ -1,6 +1,8 @@
 import math
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+import numpy as np
+from numpy.linalg import LinAlgError
 
 class Robot2D(object):
 
@@ -21,7 +23,7 @@ class Robot2D(object):
         y_ee = self.l1 * math.sin((theta1/180) * math.pi) + math.sin((theta2/180) * math.pi)
         self.ee_pos = (x_ee, y_ee)
 
-    def robot_to_lines():
+    def robot_to_lines(self):
         
 
 class RectangleObstacle(Rectangle):
@@ -50,4 +52,21 @@ class ConfigSpaceCreator(object):
             task_space_plot.add_patch(obs)
 
     def collision_check(self, joint_angles):
+        pass
+    
+    
+    
+class utils(object):
 
+    def find_intersection(line1, line2):
+        '''line1 is represented by its x and y coefficients
+        example: ax + by = c -> line1 = [a,b,c]'''
+        A = np.array([line1[0:1], line2[0:1]])
+        b = np.array([line1[2], line2[2]])
+        try:
+            x = np.linalg.inv(A) @ b
+            intersection = True
+        except LinAlgError:
+            intersection = False
+
+        return (intersection, x)
