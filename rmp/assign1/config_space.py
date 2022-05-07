@@ -24,7 +24,7 @@ class Robot2D(object):
         self.ee_pos = (x_ee, y_ee)
 
     def robot_to_lines(self):
-        
+        pass
 
 class RectangleObstacle(Rectangle):
     
@@ -32,7 +32,7 @@ class RectangleObstacle(Rectangle):
         '''origin specifies the coordinates of the lower left corner in the 2D space'''
         super().init(xy, w, h, angle)
     
-    def gobstacle_to_lines(self, figure):
+    def obstacle_to_lines(self, figure):
         '''finds the separate line equations defining the obstacle'''
         pass
 
