@@ -1,8 +1,6 @@
 import math
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-import numpy as np
-from numpy.linalg import LinAlgError
 import utils
 
 class Robot2D(object):
@@ -66,64 +64,76 @@ class RectangleObstacle(Rectangle):
         '''finds the separate line equations defining the obstacle'''
         x, y = self.xy
         line1_v = [1, 0, x]
-        line2_v = [1, 0, x+self._width]
+        line2_v = [1, 0, x + self._width]
         line1_h = [0, 1, y]
-        line2_h = [0, 1, y+self._height]
+        line2_h = [0, 1, y + self._height]
 
         return (line1_v, line2_v, line1_h, line2_h)
 
+    def get_domain(self):
+        x, y = self.xy
+        x_domain = [x, x + self._width]
+        y_domain = [y, y + self._height]
+
+        return (x_domain, y_domain)
+
 class ConfigSpaceCreator(object):
 
-    def __init__(self, robot, obstacles, figure):
+    def __init__(self, robot, obstacles, figure, ax):
         self.robot = robot
         self.obstacles = obstacles
         self.fig = figure
-        self.first_plot = True
-        self.task_space_plot = None
-        self.config_space_plot = None
+        self.ax = ax
+        self.task_space_plot = self.ax[0]
+        self.config_space_plot = self.ax[1]    
+        
+        # configuring the subplots
+        self.task_space_plot.set_xlim([-5, 5])
+        self.task_space_plot.set_ylim([-5, 5])
+        self.config_space_plot.set_xlim([0, 180])
+        self.config_space_plot.set_ylim([0, 360])
 
     def plot_space(self, joint_angles):
 
-        if self.first_plot:
-            # initiailizing the axes    
-            self.task_space_plot = self.fig.add_subplot(121)
-            self.config_space_plot = self.fig.add_subplot(122)
-
-            # drawing the obstacle
-            for obs in self.obstacles:
-                self.task_space_plot.add_patch(obs)
-            self.first_plot = False
-        # drawing the robot
         self.robot.draw_robot(joint_angles, self.task_space_plot)
 
         # drawing the config space 
+        for obs in self.obstacles:
+                self.task_space_plot.add_patch(obs)
         if self.collision_check(joint_angles) == True:
             self.config_space_plot.plot(joint_angles[0], joint_angles[1], marker='x')
-
+        plt.pause(0.05)
+        self.task_space_plot.cla()
 
     def collision_check(self, joint_angles):
         for obs in self.obstacles:
             for line1 in self.robot.robot_to_lines(joint_angles):
                 for line2 in obs.obstacle_to_lines():
-                    if utils.find_intersection(line1, line2)[0]:
+                    sol = utils.find_intersection(line1, line2)
+                    if sol[0] == False:
+                        collision = False
+                        return collision
+                    if sol[0] == True and (sol[1][0][0] in obs.get_domain()[0] and sol[1][1][0] in obs.get_domain()[1]):
                         collision = True
                         return collision
-        collision = False
-        return collision
+                    collision = False
+                    return collision
+
 
 
 if __name__ == '__main__':
     
-    my_robot = Robot2D(l1=1, l2=1, base_pos=(0, 0))
+    my_robot = Robot2D(l1=3, l2=3, base_pos=(0, 0))
     rect1 = RectangleObstacle(xy=(-2,1), w=2, h=1)
     rect2 = RectangleObstacle(xy=(2,2), w=2, h=1)
     obstacles = [rect1, rect2]
-    figure = plt.figure()
+    figure, ax = plt.subplots(1, 2, figsize=[10,10])
 
-    config_space = ConfigSpaceCreator(my_robot, obstacles, figure)
+    config_space = ConfigSpaceCreator(my_robot, obstacles, figure, ax)
 
     for theta1 in range(181):
         print(theta1)
         for theta2 in range(361):
             joint_angles = (theta1, theta2)
             config_space.plot_space(joint_angles)
+    plt.show()
