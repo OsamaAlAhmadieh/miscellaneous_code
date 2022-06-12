@@ -23,11 +23,17 @@ class Robot2D(object):
         self.ee_pos = (x_ee, y_ee)
 
     def robot_to_points(self, joint_angles):
-        '''Returns the three points that are used to plot the robot'''
+        '''Returns the three points that are used to plot the robot
+        Input:
+            Joint angles: [theta1, theta2] in degrees
+            
+        Output:
+            x: [x1, x2, x3] the x coordinates of the points defining the robot. 
+            y: [y1, y2, y3] the y coordinates of the points defining the robot.
+        '''
         x = []
         y = []
         theta1 = joint_angles[0]
-        theta2 = joint_angles[1]
         x.append(self.base_pos[0])
         y.append(self.base_pos[1])
 
@@ -52,6 +58,10 @@ class Robot2D(object):
         line2 = utils.get_line_eq(x[1:3], y[1:3])
 
         return (line1, line2)
+
+    def get_domains(self, joint_angles):
+        x, y = self.robot_to_points(joint_angles)
+
 
 class RectangleObstacle(Rectangle):
     
@@ -85,7 +95,8 @@ class ConfigSpaceCreator(object):
         self.fig = figure
         self.ax = ax
         self.task_space_plot = self.ax[0]
-        self.config_space_plot = self.ax[1]    
+        self.config_space_plot = self.ax[1]  
+        self.counter = 1  
         
         # configuring the subplots
         self.task_space_plot.set_xlim([-5, 5])
@@ -96,10 +107,9 @@ class ConfigSpaceCreator(object):
     def plot_space(self, joint_angles):
 
         self.robot.draw_robot(joint_angles, self.task_space_plot)
-
         # drawing the config space 
         for obs in self.obstacles:
-                self.task_space_plot.add_patch(obs)
+            self.task_space_plot.add_patch(obs)
         if self.collision_check(joint_angles) == True:
             self.config_space_plot.plot(joint_angles[0], joint_angles[1], marker='x')
         plt.pause(0.05)
@@ -112,15 +122,17 @@ class ConfigSpaceCreator(object):
                     sol = utils.find_intersection(line1, line2)
                     if sol[0] == False:
                         collision = False
-                        return collision
-                    if sol[0] == True and (sol[1][0][0] in obs.get_domain()[0] and sol[1][1][0] in obs.get_domain()[1]):
-                        collision = True
-                        return collision
-                    collision = False
-                    return collision
-
-
-
+                    else:
+                        print(sol[1], obs.get_domain())
+                        if utils.check_in_domain(sol[1], obs.get_domain()):
+                            collision = True
+                            print(collision)
+                            return collision
+                        else:
+                            collision = False
+        return collision
+                            
+    
 if __name__ == '__main__':
     
     my_robot = Robot2D(l1=3, l2=3, base_pos=(0, 0))
